@@ -1,0 +1,57 @@
+---
+# tasks file for openssl_build
+- name: "Validation"
+  assert:
+    that:
+      - "'{{ openssl_build_version | regex_replace('^(\\d+\\.\\d+\\.\\d+)[a-z]?', '\\1') }}' == '1.1.1'"
+      - "'{{ ansible_distribution }}' in ['CentOS', 'RedHat']"
+
+- when: ansible_distribution == 'CentOS'
+  name: "Validation for CentOS"
+  assert:
+    that:
+      - "'{{ ansible_distribution_major_version }}' in ['7', '8']"
+
+- when: ansible_distribution == 'RedHat'
+  name: "Validation for RedHat"
+  assert:
+    that:
+      - "'{{ ansible_distribution_major_version }}' in ['8']"
+
+- name: "Install required packages"
+  yum:
+    name: "{{ openssl_build_required_packages }}"
+    state: present
+
+- when: not openssl_build_unarchive_remote_src
+  name: "Download OpenSSL sources to local"
+  local_action:
+    module: command
+    cmd: "curl --create-dirs -o {{ openssl_build_downloaded_dir }}/{{ openssl_build_src_url | split('/') | last }} {{ openssl_build_src_url }}"
+  changed_when: false
+
+- name: "Unarchive OpenSSL source"
+  unarchive:
+    src: "{% if not openssl_build_unarchive_remote_src %}{{ openssl_build_downloaded_dir }}/{{ openssl_build_src_url | split('/') | last }}{% else %}{{ openssl_build_src_url }}{% endif %}"
+    dest: "{{ openssl_build_unarchive_dest }}"
+    remote_src: "{{ openssl_build_unarchive_remote_src }}"
+
+- when: not openssl_build_unarchive_remote_src
+  name: "Delete downloaded OpenSSL sources to local"
+  local_action:
+    module: command
+    cmd: "rm -r {{ openssl_build_downloaded_dir }}"
+  changed_when: false
+
+- name: "Execute OpenSSL config"
+  command:
+    cmd: "./config{% if openssl_build_config_option %} {{ openssl_build_config_option | join(' ') }}{% endif %}"
+    chdir: "{{ openssl_build_src_path }}"
+  changed_when: false
+
+- name: "Execute OpenSSL make"
+  community.general.make:
+    chdir: "{{ openssl_build_src_path }}"
+    target: "{{ item }}"
+  changed_when: false
+  loop: "{{ openssl_build_make_target }}"

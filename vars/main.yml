@@ -1,0 +1,38 @@
+---
+# vars file for openssl_build
+
+# Packages required to build OpenSSL
+openssl_build_required_packages:
+  - perl
+  - make
+  - gcc
+
+# Whether to download the OpenSSL sources on a remote server (optional, boolean, default: no)
+# openssl_build_unarchive_remote_src: yes or no
+
+# Local directory where OpenSSL sources are saved
+openssl_build_downloaded_dir: "{{ inventory_hostname | to_uuid }}"
+
+# OpenSSL version (required, string)
+# openssl_build_version: 1.1.1q
+
+# OpenSSL source download URL
+openssl_build_src_url: "https://www.openssl.org/source/openssl-{{ openssl_build_version }}.tar.gz"
+
+# OpenSSL unarchive dest (optional, path, default: /usr/local/src)
+# openssl_build_unarchive_dest: /usr/local/src
+
+# OpenSSL config option (optional, list / elements=string, default: [])
+# openssl_build_config_option:
+#   - "--prefix=/usr/local/openssl"
+#   - "'-Wl,-rpath,$(LIBRPATH)'"
+
+# OpenSSL unarchive source path
+openssl_build_src_path: "{{ openssl_build_unarchive_dest }}/openssl-{{ openssl_build_version }}"
+
+# OpenSSL make target (optional, list / elements=string, default: [ install ])
+# openssl_build_make_target:
+#   - all
+#   - install_sw
+#   - install_ssldirs
+#   - install_docs

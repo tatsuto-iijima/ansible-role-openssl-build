@@ -1,0 +1,7 @@
+---
+- hosts: validation-test
+  connection: docker
+  vars:
+    - openssl_build_version: "3.0.5"
+  roles:
+    - ../../../ansible-role-openssl-build

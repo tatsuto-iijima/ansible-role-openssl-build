@@ -1,0 +1,63 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+  vars:
+    - openssl_build_version: "1.1.1q"
+    - openssl_build_prefix: "/usr/local/openssl"
+  tasks:
+    - name: "List OpenSSL installed path"
+      stat:
+        path: "{{ item }}"
+      register: openssl_build_exists
+      loop:
+        - "/usr/local/src/openssl-{{ openssl_build_version }}"
+        - "{{ openssl_build_prefix }}/bin/openssl"
+        - "{{ openssl_build_prefix }}/include"
+        - "{{ openssl_build_prefix }}/lib/libcrypto.a"
+        - "{{ openssl_build_prefix }}/lib/libcrypto.so"
+        - "{{ openssl_build_prefix }}/lib/libcrypto.so.1.1"
+        - "{{ openssl_build_prefix }}/lib/libssl.a"
+        - "{{ openssl_build_prefix }}/lib/libssl.so"
+        - "{{ openssl_build_prefix }}/lib/libssl.so.1.1"
+        - "{{ openssl_build_prefix }}/share"
+
+    - name: "Check OpenSSL file exists"
+      assert:
+        that: "{{ item.stat.exists }}"
+      loop: "{{ openssl_build_exists.results }}"
+
+    - name: "List OpenSSL not installed path"
+      stat:
+        path: "{{ item }}"
+      register: openssl_build_not_exists
+      loop:
+        - "{{ openssl_build_prefix }}/ssl"
+
+    - name: "Check OpenSSL file no exists"
+      assert:
+        that: not item.stat.exists
+      loop: "{{ openssl_build_not_exists.results }}"
+
+    - name: "Get OpenSSL version"
+      command: "{{ openssl_build_prefix }}/bin/openssl version"
+      register: openssl_build_openssl_current_version
+      environment:
+        LD_LIBRARY_PATH: "{{ openssl_build_prefix }}/lib"
+
+    - name: "Check OpenSSL version"
+      assert:
+        that: openssl_build_openssl_current_version.stdout | regex_replace('^OpenSSL\\s+(\\S+)\\s+.+$','\\1') == openssl_build_version
+
+    - name: "Get OpenSSL road shared library"
+      command: "ldd {{ openssl_build_prefix }}/bin/openssl"
+      register: openssl_build_ldd_result
+      environment:
+        LD_LIBRARY_PATH: "{{ openssl_build_prefix }}/lib"
+
+    - name: "Check shared library path"
+      assert:
+        that:
+          - openssl_build_ldd_result.stdout_lines | select("contains", "libssl.so.1.1 => ") | last | regex_replace('^.+=>\\s*(\\S+)\\s*\\(.*\\)$','\\1') == '{{ openssl_build_prefix }}/lib/libssl.so.1.1'
+          - openssl_build_ldd_result.stdout_lines | select("contains", "libcrypto.so.1.1 => ") | last | regex_replace('^.+=>\\s*(\\S+)\\s*\\(.*\\)$','\\1') == '{{ openssl_build_prefix }}/lib/libcrypto.so.1.1'

@@ -1,0 +1,16 @@
+---
+# defaults file for openssl_build
+
+# Whether to download the OpenSSL sources on a remote server
+openssl_build_unarchive_remote_src: no
+
+# OpenSSL unarchive dest
+openssl_build_unarchive_dest: /usr/local/src
+
+# OpenSSL config option
+openssl_build_config_option: []
+
+# OpenSSL make target
+openssl_build_make_target:
+  - all
+  - install

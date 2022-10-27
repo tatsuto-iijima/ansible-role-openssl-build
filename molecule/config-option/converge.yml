@@ -1,0 +1,12 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    - openssl_build_version: 1.1.1q
+    - openssl_build_config_option:
+        - "--prefix=/usr/local/openssl"
+        - "'-Wl,-rpath,$(LIBRPATH)'"
+  tasks:
+    - name: "Include openssl_build"
+      include_role:
+        name: "openssl_build"

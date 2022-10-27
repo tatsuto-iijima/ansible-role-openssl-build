@@ -1,0 +1,19 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: centos7
+    image: docker.io/library/centos:centos7
+    pre_build_image: true
+  - name: centos8
+    image: quay.io/centos/centos:stream8
+    pre_build_image: true
+  - name: rhel8
+    image: docker.io/redhat/ubi8:latest
+    pre_build_image: true
+provisioner:
+  name: ansible
+verifier:
+  name: ansible

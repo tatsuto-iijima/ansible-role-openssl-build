@@ -1,0 +1,40 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+  vars:
+    - openssl_build_version: "1.1.1q"
+    - openssl_build_prefix: "/usr/local"
+  tasks:
+    - name: "List OpenSSL installed path"
+      stat:
+        path: "{{ item }}"
+      register: openssl_build_exists
+      loop:
+        - "{{ openssl_build_prefix }}/src/openssl-{{ openssl_build_version }}"
+        - "{{ openssl_build_prefix }}/bin/openssl"
+        - "{{ openssl_build_prefix }}/include/openssl"
+        - "{{ openssl_build_prefix }}/lib{% if ansible_architecture == 'x86_64' %}64{% endif %}/libcrypto.a"
+        - "{{ openssl_build_prefix }}/lib{% if ansible_architecture == 'x86_64' %}64{% endif %}/libcrypto.so"
+        - "{{ openssl_build_prefix }}/lib{% if ansible_architecture == 'x86_64' %}64{% endif %}/libcrypto.so.1.1"
+        - "{{ openssl_build_prefix }}/lib{% if ansible_architecture == 'x86_64' %}64{% endif %}/libssl.a"
+        - "{{ openssl_build_prefix }}/lib{% if ansible_architecture == 'x86_64' %}64{% endif %}/libssl.so"
+        - "{{ openssl_build_prefix }}/lib{% if ansible_architecture == 'x86_64' %}64{% endif %}/libssl.so.1.1"
+        - "{{ openssl_build_prefix }}/share/doc/openssl"
+        - "{{ openssl_build_prefix }}/ssl"
+
+    - name: "Check OpenSSL file exists"
+      assert:
+        that: "{{ item.stat.exists }}"
+      loop: "{{ openssl_build_exists.results }}"
+
+    - name: "Get OpenSSL version"
+      command: "{{ openssl_build_prefix }}/bin/openssl version"
+      register: openssl_build_openssl_current_version
+      environment:
+        LD_LIBRARY_PATH: "{{ openssl_build_prefix }}/lib:{{ openssl_build_prefix }}/lib64"
+
+    - name: "Check OpenSSL version"
+      assert:
+        that: openssl_build_openssl_current_version.stdout | regex_replace('^OpenSSL\\s+(\\S+)\\s+.+$','\\1') == openssl_build_version
