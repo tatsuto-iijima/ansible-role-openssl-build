@@ -23,6 +23,12 @@
     name: "{{ openssl_build_required_packages }}"
     state: present
 
+- name: Remove OpenSSL source
+  ansible.builtin.file:
+    path: "{{ openssl_build_src_path }}"
+    state: absent
+  changed_when: false
+
 - when: not openssl_build_unarchive_remote_src
   name: "Download OpenSSL sources to local"
   local_action:
