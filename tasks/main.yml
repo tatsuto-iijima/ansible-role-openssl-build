@@ -30,23 +30,35 @@
   changed_when: false
 
 - when: not openssl_build_unarchive_remote_src
+  name: Create temporary download directory
+  local_action:
+    module: tempfile
+    state: directory
+  register: openssl_build_temp_download_dir
+  changed_when: false
+
+- when: not openssl_build_unarchive_remote_src
   name: "Download OpenSSL sources to local"
   local_action:
-    module: command
-    cmd: "curl --create-dirs -o {{ openssl_build_downloaded_dir }}/{{ openssl_build_src_url | split('/') | last }} {{ openssl_build_src_url }}"
+    module: get_url
+    url: "{{ openssl_build_src_url }}"
+    dest: "{{ openssl_build_temp_download_dir.path }}"
+  register: openssl_build_temp_download_file
   changed_when: false
 
 - name: "Unarchive OpenSSL source"
   unarchive:
-    src: "{% if not openssl_build_unarchive_remote_src %}{{ openssl_build_downloaded_dir }}/{{ openssl_build_src_url | split('/') | last }}{% else %}{{ openssl_build_src_url }}{% endif %}"
+    src: "{% if not openssl_build_unarchive_remote_src %}{{ openssl_build_temp_download_file.dest }}{% else %}{{ openssl_build_src_url }}{% endif %}"
     dest: "{{ openssl_build_unarchive_dest }}"
     remote_src: "{{ openssl_build_unarchive_remote_src }}"
+  changed_when: false
 
 - when: not openssl_build_unarchive_remote_src
   name: "Delete downloaded OpenSSL sources to local"
   local_action:
-    module: command
-    cmd: "rm -r {{ openssl_build_downloaded_dir }}"
+    module: file
+    path: "{{ openssl_build_temp_download_dir.path }}"
+    state: absent
   changed_when: false
 
 - name: "Execute OpenSSL config"
