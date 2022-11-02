@@ -4,4 +4,4 @@
   vars:
     - openssl_build_version: "1.1.1q"
   roles:
-    - ../../../ansible-role-openssl-build
+    - ../../../openssl_build
